@@ -179,7 +179,7 @@ int main() {
 							stepCount++;
 							// This calculates and prints how far the program is 
 							// with the current test.  Change 4 and 3s to adjust fineness/spacing.
-							printf("%.4f%%  %llu / %llu steps.  A^x B^y C^z: ", 
+							printf("%6.2f%% %8llu / %llu steps.  A^x B^y C^z: ", 
 								((double)100 * stepCount) / (steps), stepCount, steps);
 							printf("%3.llu^%3.llu %3.llu^%3.llu %3.llu^%3.llu\n",
 								A, x, B, y, C, z);
