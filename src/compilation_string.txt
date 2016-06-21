@@ -1,2 +1,4 @@
 cd C:\Users\simmonsdm\Documents\workspace\Beal\src
 cl /FeC:\Users\simmonsdm\Documents\workspace\Beal\bin\BealSimmonsComplete(64bit).exe /FoC:\Users\simmonsdm\Documents\workspace\Beal\bin\BealSimmonsComplete(64bit).obj BealSimmonsComplete(64bit).cpp
+
+"..\bin\BealSimmonsComplete(64bit).exe"

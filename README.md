@@ -1,5 +1,5 @@
 # Beal's Conjecture
-Author: David Simmons.  
+Author: David Simmons (GitHub: davsim1) 
 This is a program to find examples or counterexamples of Beal's Conjecture.  It uses a brute force
 approach to do this by looping through all of the possibilities, and it can handle numbers up to 
 the size of C's long long int.  I made this for practice using C and git.
