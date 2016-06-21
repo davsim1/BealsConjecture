@@ -1,0 +1,1 @@
+cl /FeC:\Users\simmonsdm\Documents\workspace\Beal\bin /FoC:\Users\simmonsdm\Documents\workspace\Beal\bin BealSimmonsComplete(64bit).cpp
