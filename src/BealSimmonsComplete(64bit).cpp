@@ -4,7 +4,7 @@
 // This code is to find examples and counterexamples of Beal's Conjecture using 
 // 64bit integers.
 // Original Date: 6/21/2013
-// Current Date: 6/21/2016
+// Current Date: 6/22/2016
 
 #include <stdio.h>
 #include <math.h>
@@ -14,7 +14,7 @@
 // This allows the use of printf() and scanf() in Visual Studio Express 2012.
 #pragma warning(disable: 4996)
 
-// Returns base ^ exponent as unsigned long long by using exponentiation by
+// Returns base ^ exponent as unsigned long long using exponentiation by
 // squaring.  This only works with positive numbers.
 unsigned long long power(unsigned long long base, unsigned long long exponent) {
 	unsigned long long ans = 1;
@@ -30,81 +30,25 @@ unsigned long long power(unsigned long long base, unsigned long long exponent) {
 	return ans;
 }
 
-// Returns true if input is prime.  
-bool isPrime(unsigned long long num) {
-	unsigned long long i = 0;
+// Calculates and returns the gcd of u and v using the iterative version of the 
+// standard Euclidean Algorithm.  On this machine, this ran faster than binary, 
+// subtraction, and recursive versions of this algorithm.  See previous commits
+// for functions that searched for common prime factors rather than computing GCDs.
+unsigned long long gcd(unsigned long long u, unsigned long long v) {
+	unsigned long long temp;
 	
-	// Use some chached primes.
-	if ((num == (unsigned long long)2) || (num == (unsigned long long)3) || 
-	(num == (unsigned long long)5) || (num == (unsigned long long)7) || 
-	(num == (unsigned long long)11) || (num == (unsigned long long)13) ||
-	(num == (unsigned long long)17) || (num == (unsigned long long)19) || 
-	(num == (unsigned long long)23) || (num == (unsigned long long)29) || 
-	(num == (unsigned long long)31) || (num == (unsigned long long)37)) {
-		return true;
+	while (v != 0) {
+		temp = v;
+		v = u % v;
+		u = temp;
 	}
-
-	if (num < (unsigned long long)37) {
-		return false;
-	}
-
-	if ((num % (unsigned long long)2) == 0) {
-		return false;
-	}
-
-	// These loop through an approximation of sqrt(num) because a number's smallest 
-	// prime factor will not be more than sqrt of itself. The sqrt() function is 
-	// avoided because it takes type double.
-	if ((num < (unsigned long long)131)) {
-		// sqrt(x) < x/6 < x/75 + 20  for 36 < x < 131
-		for (i = (unsigned long long)3; i <= (num / (unsigned long long)6); i++) {
-			if ((num % i) == 0) {
-				return false;
-			}
-		}
-	} else {
-		// sqrt(x) < x/75 + 20  for all x
-		for (i = (unsigned long long)3; i <= ((num / (unsigned long long)75) + 
-		(unsigned long long)20); i++) {
-			if ((num % i) == 0) {
-				return false;
-			}
-		}
-	}
-	return true;
+	
+	return u;
 }
 
-// Returns the minimum of 3 values.
-unsigned long long min(unsigned long long a, long long  int b, long long  int c) {
-	if (a <= b && a <= c) {
-		return a;
-	} else if (b <= a && b <= c) {
-		return b;
-	} else {
-		return c;
-	}
-}
-
-// Returns true if the given triad has no common prime factors.
-bool noCommonPrimeFactors(unsigned long long a, long long  int b, long long  int c) {
-	unsigned long long minimum = min(a, b, c);
-	unsigned long long i = 0;
-	
-	// Loop from 2 to min(a,b,c)/2 looking for a shared prime factor.
-	// Example for why to divide by 2: 100 has no factors 50 < x < 100
-	// because 1 < 100/x < 2.  The same goes for all numbers.
-	for (i = 2; i <= minimum/(unsigned long long)2 + 1; i++) {
-		if (a % i == 0 && b % i == 0 && c % i == 0 && isPrime(i)) {
-			return false;
-		}
-	}
-	
-	// There are no factors min/2 < x < min, but min may be a factor.
-	if (a % minimum == 0 && b % minimum == 0 && c % minimum == 0 && isPrime(minimum)) {
-		return false;
-	}
-
-	return true;
+// Returns if a, b, and c are pairwise coprime by checking their GCDs.
+bool coprime(unsigned long long a, long long int b, long long int c) {
+	return gcd(a,b) == 1 && gcd(b,c) == 1 && gcd(a,c) == 1;
 }
 
 // Returns true if base can be raised to power without overflow.
@@ -192,7 +136,11 @@ int main() {
 		printf("Enter an output file name or path: ");
 		scanf("%s%c", outFileName, &phantom);
 	}
-	printf("Output file name: %s\n", outFileName);
+	printf("Output file name: %s\n\n", outFileName);
+	
+	// Ask to begin.
+	printf("Begin process with above values?\n");
+	system("pause");
 	
 	// Begin timing process.
 	startTime = clock();
@@ -201,14 +149,6 @@ int main() {
 	steps = power((maxExponent - 2), 3) * power((maxBase), 3) + power((maxExponent - 2), 3) * 
 	power((maxBase), 2) + power((maxExponent - 2), 3) * maxBase + power((maxExponent - 2), 3) + 
 	power((maxExponent - 2), 2) + maxExponent - 2;
-
-	// Final correct algorithm for the number of steps in six stacked loops.  
-	// First three loops are off of maxExponent, last three off of maxBase. 
-	// Each set of three can have no repeats.
-	//steps = (maxExponent-2)*(maxExponent-3)*(maxExponent-4)*(maxBase)*(maxBase-1)*
-	//(maxBase-2) + (maxExponent-2)*(maxExponent-3)*(maxExponent-4)*(maxBase)*(maxBase-1)
-	//+ (maxExponent-2)*(maxExponent-3)*(maxExponent-4)*(maxBase) + (maxExponent-2)*
-	//(maxExponent-3)*(maxExponent-4) + (maxExponent-2)*(maxExponent-3) + (maxExponent-2);
 
 	// Open output file to be closed after computations.
 	outputFile = fopen(outFileName, "w");
@@ -237,14 +177,14 @@ int main() {
 						// For each C
 						for (C = 1; C <= maxBase; C++) {
 							stepCount++;
-							// This calculates and prints how far the program is 
-							// with the current test.  Change 4 and 3s to adjust fineness/spacing.
+							// This calculates and prints how far the program is.
+							// Change 4 and 3s to adjust fineness/spacing.
 							printf("%6.2f%% %8llu / %llu steps.  A^x B^y C^z: ", 
 								((double)100 * stepCount) / (steps), stepCount, steps);
 							printf("%3.llu^%3.llu %3.llu^%3.llu %3.llu^%3.llu\n",
 								A, x, B, y, C, z);
 							if ((power(A, x) + power(B, y)) == power(C, z)) {
-								if (noCommonPrimeFactors(A, B, C)) {
+								if (coprime(A, B, C)) {
 									// Show counterexample result.
 									printf("\nA COUNTEREXAMPLE HAS BEEN FOUND: ");
 									printf("\n%llu^%llu + %llu^%llu = %llu^%llu \n", 
@@ -301,6 +241,7 @@ int main() {
 	minutes = seconds / 60;
 	seconds -= minutes * 60;
 	printf("Time taken: %d hours, %d minutes, %d seconds.\n", hours, minutes, seconds);
+	
 	system("pause");
 	return 0;
 }
