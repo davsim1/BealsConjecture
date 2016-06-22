@@ -10,21 +10,30 @@
 #include <math.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <time.h>
 // This allows the use of printf() and scanf() in Visual Studio Express 2012.
 #pragma warning(disable: 4996)
 
-// Returns base ^ exponent as unsigned long long.
+// Returns base ^ exponent as unsigned long long by using exponentiation by
+// squaring.  This only works with positive numbers.
 unsigned long long power(unsigned long long base, unsigned long long exponent) {
-	unsigned long long ans = base;
-	unsigned long long i = 0;
-	for (i = 2; i <= exponent; i++)
-		ans = ans * base;
+	unsigned long long ans = 1;
+	
+	while (exponent != 0) {
+		if ((exponent & 1) != 0) {
+			ans *= base;
+		}
+		exponent >>= 1;
+		base *= base;
+	}
+	
 	return ans;
 }
 
-// Returns true if input is prime.  Needs to be optimized.
+// Returns true if input is prime.  
 bool isPrime(unsigned long long num) {
 	unsigned long long i = 0;
+	
 	// Use some chached primes.
 	if ((num == (unsigned long long)2) || (num == (unsigned long long)3) || 
 	(num == (unsigned long long)5) || (num == (unsigned long long)7) || 
@@ -43,18 +52,20 @@ bool isPrime(unsigned long long num) {
 		return false;
 	}
 
-	// These loop through an approximation of sqrt(num). The sqrt() function is 
+	// These loop through an approximation of sqrt(num) because a number's smallest 
+	// prime factor will not be more than sqrt of itself. The sqrt() function is 
 	// avoided because it takes type double.
-	if ((num <= (unsigned long long)131)) {
+	if ((num < (unsigned long long)131)) {
+		// sqrt(x) < x/6 < x/75 + 20  for 36 < x < 131
 		for (i = (unsigned long long)3; i <= (num / (unsigned long long)6); i++) {
 			if ((num % i) == 0) {
 				return false;
 			}
 		}
-
-	}
-	else {
-		for (i = 3; i <= ((num / 75) + 20); i++) {
+	} else {
+		// sqrt(x) < x/75 + 20  for all x
+		for (i = (unsigned long long)3; i <= ((num / (unsigned long long)75) + 
+		(unsigned long long)20); i++) {
 			if ((num % i) == 0) {
 				return false;
 			}
@@ -88,12 +99,7 @@ bool noCommonPrimeFactors(unsigned long long a, long long  int b, long long  int
 		}
 	}
 	
-	// There are no factors min/2 < x < min, but min may be a factor
-	printf("min %llu\n", minimum);
-	printf("mod a %d\n", minimum % a == 0);
-	printf("mod b %d\n", minimum % b == 0);
-	printf("mod c %d\n", minimum % c == 0);
-	printf("prime %d\n", isPrime(minimum));
+	// There are no factors min/2 < x < min, but min may be a factor.
 	if (a % minimum == 0 && b % minimum == 0 && c % minimum == 0 && isPrime(minimum)) {
 		return false;
 	}
@@ -106,9 +112,13 @@ bool isValidPower(unsigned long long base, unsigned long long exponent) {
 	unsigned long long prev = 0;
 	unsigned long long ans = base;
 	unsigned long long i = 0;
+	
+	// Try the sequence of mutiplications that makes base^exponent.
 	for (i = 2; i <= exponent; i++) {
 		prev = ans;
 		ans = ans * base;
+		// If it overflows, a positive times a positive will create a smaller 
+		// number because it wraps around.
 		if (ans < prev) {
 			return false;
 		}
@@ -117,63 +127,45 @@ bool isValidPower(unsigned long long base, unsigned long long exponent) {
 }
 
 // Returns true if the maximum base and exponent can be used without overflow and
-// if they can be summed with A^x + B^y without overflow.
+// if they can be summed by A^x + B^y without overflow.
 bool isValidInput(unsigned long long maxBase, unsigned long long maxExponent) {
+	unsigned long long first, second;
+	
 	if (!isValidPower(maxBase, maxExponent)) {
 		return false;
 	}
-	unsigned long long first = power(maxBase, maxExponent);
-	unsigned long long second = power(maxBase, maxExponent);
+	
+	first = power(maxBase, maxExponent);
+	second = power(maxBase, maxExponent);
+	
 	if (first + second < first) {
 		return false;
 	}
+	
 	return true;
 }
 
 int main() {
-	// Initializations. 
-	unsigned long long x = 0;
-	unsigned long long y = 0;
-	unsigned long long z = 0;
-	unsigned long long A = 0;
-	unsigned long long B = 0;
-	unsigned long long C = 0;
-	unsigned long long result = 0;
-
-	unsigned long long maxBase = 10;
-	unsigned long long maxExponent = 10;
-
-	unsigned long long input = 0;
-	unsigned long long inputTwo = 0;
-	unsigned long long inputThree = 0;
-	char phantom = ' ';
-
-	unsigned long long steps = 0;
-	unsigned long long stepCount = 0;
-
-	int cont = 1;
-
-	char charHolder = ' ';
+	clock_t startTime, timeDifference;
+	unsigned long long A, B, C, x, y, z, maxBase, maxExponent, input, steps, stepCount, i;
+	char phantom, charHolder;
 	char outFileName[100] = "..\\output\\output.csv";
 	char counterFileName[50] = "..\\output\\BEALCOUNTEREXAMPLE.txt";
 	FILE* outputFile = NULL;
 	FILE* counterFile = NULL;
-	
 	bool validInput = true;
-
-	unsigned long long i = 0;
+	int hours, minutes, seconds;
 
 	// Take inputs.
 	do {
+		// Take max base and exponent.
 		printf("A^x + B^y = C^z\n");
 		printf("Enter a maximum number to test for A, B, and C:\n");
-		scanf("%llu%c", &input, &phantom);
-		maxBase = input;
+		scanf("%llu%c", &maxBase, &phantom);
 		printf("The maximum number to be tested for the bases is %llu.\n", maxBase);
 		
 		printf("Enter a maximum number to test for x, y, and z:\n");
-		scanf("%llu%c", &input, &phantom);
-		maxExponent = input;
+		scanf("%llu%c", &maxExponent, &phantom);
 		printf("The maximum number to be tested for the exponents is %llu.\n", maxExponent);
 		
 		// Continue asking for base and exponent until they won't create a
@@ -191,6 +183,7 @@ int main() {
 		}
 	} while (!validInput);
 	
+	// Take output filename.
 	printf("\nThe current output file name is %s.  \n", outFileName);
 	printf("Note: The contents of this file will be erased if the file already exists:\n");
 	printf("To change this enter 1, to start test enter another number:\n");
@@ -200,7 +193,10 @@ int main() {
 		scanf("%s%c", outFileName, &phantom);
 	}
 	printf("Output file name: %s\n", outFileName);
-
+	
+	// Begin timing process.
+	startTime = clock();
+	
 	// This gives correct number of steps for no extra if statements.
 	steps = power((maxExponent - 2), 3) * power((maxBase), 3) + power((maxExponent - 2), 3) * 
 	power((maxBase), 2) + power((maxExponent - 2), 3) * maxBase + power((maxExponent - 2), 3) + 
@@ -219,6 +215,7 @@ int main() {
 	// Add header labels.
 	fprintf(outputFile, "A,x,B,y,C,z\n");
 	
+	stepCount = 0;
 	// Exponents loops
 	// For each x
 	for (x = 3; x <= maxExponent; x++) {
@@ -250,10 +247,11 @@ int main() {
 								if (noCommonPrimeFactors(A, B, C)) {
 									// Show counterexample result.
 									printf("\nA COUNTEREXAMPLE HAS BEEN FOUND: ");
-									printf("\n%llu^%llu + %llu^%llu - %llu^%llu = %llu \n", 
-										A, x, B, y, C, z, result);
+									printf("\n%llu^%llu + %llu^%llu = %llu^%llu \n", 
+										A, x, B, y, C, z);
 									// Write counterexample to file.
 									counterFile = fopen(counterFileName, "w");
+									fprintf(counterFile, "A,x,B,y,C,z\n");
 									fprintf(counterFile, "%llu,%llu,%llu,%llu,%llu,%llu\n", 
 										A, x, B, y, C, z);
 									fclose(counterFile);
@@ -261,8 +259,7 @@ int main() {
 									// to Beal's Hypothesis.
 									system("pause");
 									return 0;
-								}
-								else {
+								} else {
 									// This is an example of Beal's Hypothesis, 
 									// the numbers follow the equation and have a 
 									// common prime factor.
@@ -295,7 +292,15 @@ int main() {
 	printf("did not find a set of numbers to disprove Beal's Hypothesis.\n\n");
 	printf("\nThe above number sets fall under Beal's Hypothesis.");
 	printf("\nThey are of format A,x,B,y,C,z and saved as %s\n", outFileName);
-
+	
+	// Stop timing process and print how much time it took.
+	timeDifference = clock() - startTime;
+	seconds = timeDifference / CLOCKS_PER_SEC;
+	hours = seconds / 3600;
+	seconds -= hours * 3600;
+	minutes = seconds / 60;
+	seconds -= minutes * 60;
+	printf("Time taken: %d hours, %d minutes, %d seconds.\n", hours, minutes, seconds);
 	system("pause");
 	return 0;
 }
